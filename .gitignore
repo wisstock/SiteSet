@@ -1,0 +1,9 @@
+# aaa
+*.csv
+*.log
+*.config
+*.gb
+
+Data/
+EnvUp/
+.Rhistory
