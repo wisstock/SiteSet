@@ -11,12 +11,12 @@ from Bio.SeqRecord import SeqRecord
 
 
 """
+Copyright © 2018 Institure of Molecular Biology and Genetics of NASU, Systems Biology Research Group
+Copyright © 2018 Borys Olifirov
+Author e-mail: omnia.fatum@gmail.com
+
 Splice sites (ss) extractions orient by exon features location,
 score calculating by MaxEnt algorithm and output CSV dataframe generating
-
-Copyright © 2018 Borys Olifirov
-Institure of Molecular Biology and Genetics of NASU,
-Systems Biology Research Group
 
 The script require Python 3.5 or higer, Biopyton 1.68 or higer
 and MaxEnt scripts (Yeo G and Burge C.B., Maximum Entropy Modeling

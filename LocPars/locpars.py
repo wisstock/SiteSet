@@ -1,5 +1,17 @@
 #!/usr/bin/env python3
 
+"""
+Copyright © 2018-2019 Institure of Molecular Biology and Genetics of NASU, Systems Biology Research Group
+Copyright © 2018-2019 Borys Olifirov
+Author e-mail: omnia.fatum@gmail.com
+
+Parsing localization of elected binding sites;
+
+The script require Python 3.5 or higer and Biopyton 1.68 or higer
+
+"""
+
+
 import csv
 import numpy as nm
 import pandas as pd
@@ -8,17 +20,6 @@ import Bio
 from Bio import SeqIO, SeqFeature
 from Bio.SeqRecord import SeqRecord
 from Bio import Align
-
-"""
-Parsing localization of elected binding sites;
-
-Copyright © Borys Olifirov 2018
-Institure of Molecular Biology and Genetics of NASU,
-Systems Biology Research Group
-
-The script require Python 3.5 or higer and Biopyton 1.68 or higer
-
-"""
 
 
 class SiteSet(): 

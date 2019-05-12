@@ -1,18 +1,9 @@
 #!/usr/bin/env python3
 
-import sys
-import csv
-import glob
-import Bio
-from Bio import SeqIO, SeqFeature
-from Bio.SeqRecord import SeqRecord
-from Bio import Align
-
 
 """
 Copyright © 2018-2019 Institure of Molecular Biology and Genetics of NASU, Systems Biology Research Group
 Copyright © 2018-2019 Borys Olifirov
-Author e-mail: omnia.fatum@gmail.com
 
 Localizing of semi-specific binding sites (bs) of RNA-binding proteins (RBP)
 using local alignment algorithm.
@@ -31,9 +22,20 @@ YTHDC1		GGACH
 SRSF3		CHWCHMC
 SRSF10		TVAAGAHY
 
-v1.1 added support data directories and loging
+v1.1 - added loging + intron seq extraction (modified BSite function)
 
 """
+
+
+import sys
+import csv
+import logging
+import glob
+import Bio
+from Bio import SeqIO, SeqFeature
+from Bio.SeqRecord import SeqRecord
+from Bio import Align
+
 
 
 def amb_nuc(seq):
@@ -89,8 +91,51 @@ def amb_nuc(seq):
 	    if new_combinations:
 	        combinations = new_combinations
 
-
 	return combinations
+
+
+def get_intron(gene=None, option = 'count'):
+	"""
+	Depending on the option parameter method returns introns count 
+	(default value, 'count'),
+	first intron seq ('first'), last intron seq ('last') 
+	or intron seq by number
+
+	"""
+	
+	try:
+		seq_record = SeqIO.read(gene, 'genbank')
+	except:
+		logging.warning('Gene not define!')
+
+	in_f_loc = []
+	in_t_loc = []
+	i = 1
+		
+	# Loop over the gen file, get the mRNA starts and ends position
+	# for '+' strand, detecting first mRNA-type feature
+	# and extract 5'-ends (f_loc) and 3'-ends locations of annotated exon
+
+	if option == 'count':
+		print('|GenIntron|', gene, 'counts of ', str(len(in_f_loc)),'introns\n')
+
+	elif type(option) == int:
+		for feature in seq_record.features:
+		if feature.type == 'mRNA':
+			for exon_location in feature.location.parts:
+				if i -1 <= option:
+					in_t_loc.append(int(exon_location.start))
+					in_f_loc.append(int(exon_location.end))
+					i += 1
+					logging.debug('introne cycle')
+				else:
+					break
+
+		return seq_record.seq[in_f_loc[option - 1] : in_t_loc[option]]
+
+	logging.info('intron ' + option + ' seq extracted succesfull')
+	logging.info('selected feature ID:' + str(feature.qualifiers.get("db_xref")))
+	logging.info('intron lenght: ' + str(len(seq_record.seq[ex_end:ex_start])))
 
 
 def algn_fuck(gene_n, ref_seq, bss_list, factor,
@@ -107,6 +152,7 @@ def algn_fuck(gene_n, ref_seq, bss_list, factor,
 	"""
 	seq_record = SeqIO.read(ref_seq, 'genbank')
 	gene_seq = str(seq_record.seq)
+	logging.debug(len(gene_seq))
 
 
 	scores = []
@@ -116,7 +162,6 @@ def algn_fuck(gene_n, ref_seq, bss_list, factor,
 	algn_it = 0
 	start_num = 0
 
-	
 	
 	aligner = Align.PairwiseAligner()
 	aligner.mode = 'local'
@@ -134,9 +179,6 @@ def algn_fuck(gene_n, ref_seq, bss_list, factor,
 		alg_list = list(alignments)
 		
 		for alg in alignments:  # present individual aligment and compute score
-			# print('\n')           
-			# print(alg)
-			# print(alg.score)
 			score_num = alg.score
 			ind_score.append(score_num)
 			str_alg = str(alg)
@@ -163,41 +205,49 @@ def algn_fuck(gene_n, ref_seq, bss_list, factor,
 		ind_score = []
 		ind_start = []
 
-
-
 	return(scores, starts, algn_it, aligner)	
 	
+
+
+logging.basicConfig(level = logging.DEBUG, filename = 'semisite.log', filemode = 'w')
+	# format = '%(levelname)-8s [%(asctime)s] %(message)s', level = logging.DEBUG, filename = 'semisite_%(asctime)s.log'
+	# debug
+	# info
+	# warning
+	# error
+	# critical
 
 
 df_name = 'semisite_df.csv'
 algnr_prmtrs = [2, -0.1, -1.9, -100]
 
 
-with open(df_name, 'w', newline = '') as res_file:  # Initializing
-	writer = csv.writer(res_file)                   # total dataframe
+with open(df_name, 'w', newline = '') as res_file:                    # Initializing
+	writer = csv.writer(res_file)                                     # total dataframe
 	writer.writerow(['gene', 'factor', 'site', 'score', 'location'])
 
 
-print('\n\n========== SemiSite v1.0 | RESULTS REVIEW ==========')
-print('=================================================\n\n')
+print('\n\n========== SemiSite v1.0 progress ==========')
+print('============================================\n\n')
 with open('factors.config', 'r', newline = '') as factors_list:
 	reader = csv.reader(factors_list)
 	for row in reader:
 		ever_seq = amb_nuc(row[1])
 		factor_name = row[0]
-		print('=========', factor_name, 'BS searching')
-		print('Seq var: ', len(ever_seq))
-		print('Seq: ',ever_seq)
+		print('\n\n=========', factor_name, 'BS searching\n')
+		logging.info(factor_name + 'BS searching')                   # factor in progress
+		logging.info('binding site variants: ' + ever_seq)           # print all site variants
+
 
 		for gb_file in glob.glob('*.gb'):
 			gene_name = gb_file.split('.')[0]
-			print('\n=====', gene_name, 'in progress')
+			print('===', gene_name, 'in progress')
 			score_list, start_list, algn_num, aligner_scores = \
 			    algn_fuck(gene_name, gb_file, ever_seq, factor_name, df_name)
-			print('Algn num: ', algn_num)
-			# print('Scores: ', score_list)
-			# print('Site starts: ', start_list)
-			print(aligner_scores)
 			print('===', gb_file.split('.')[0], 'done\n')
+
+			logging.info('alignment count: ' + algn_num)             # alignment count
+			logging.info('aligner settings:\n' + aligner_scores)     # alignment settings
+			logging.info(gene_name + ' done')                        # gene done
 
 # That's all!

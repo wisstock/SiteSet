@@ -12,8 +12,72 @@
                                    \__|  \___/   \___/  |_| |_|\_\ |_|  \__|
 
 
-SiteSet toolkit 
+=== SiteSet toolkit v0.1 =========
+==================================
 
+Toolkit for rapid analysis functional sites in nucleotide sequences.
+
+
+
+
+=== Toolkit structure: ===========
+==================================
+
+=== SemiSite (BSite) ===
+========================
+  Localizing of semi-specific binding sites (bs) of RNA-binding proteins (RBP)
+  using local alignment algorithm.
+
+  W     Weak
+  S     Strong
+  M     aMino
+  K     Keto
+  R     puRine
+  Y     pYrimidine
+  B     not A (B comes after A)
+  D     not C (D comes after C)
+  H     not G (H comes after G)
+  V     not T (V comes after T and U)
+  N     any Nucleotide (not a gap)
+  Z     Zero
+
+
+=== LacPars ============
+========================
+  Parsing localization of elected binding sites.
+
+
+=== SSite ==============
+========================
+  Splice sites (ss) extractions orient by exon features location,
+  score calculating by MaxEnt algorithm and output CSV dataframe generating
+  (Yeo G and Burge C.B., Maximum Entropy Modeling of Short Sequence Motifs with
+  Applications to RNA Splicing Signals, Journal of Computational Biology,
+  in press; Copyright 2004, Gene Yeo, Chris Burge).
+
+
+
+
+=== Config file structure ========
+==================================
+File with extension ".config" are require for setting up list of RBP
+and them bindings sites in extension nucleotide notation. 
+Default config file name for SemiSite (BSite)
+and LocPars tools are "factors.config".
+
+Data presentation format:
+YTHDC1,GGACH
+SRSF3,CHWCHMC
+SRSF10,TVAAGAHY
+
+"factor_dep.config":
+YTHDC1,False
+SRSF3,True
+SRSF10,True
+
+
+=== Log file structure ==========
+==================================
 
 
 
