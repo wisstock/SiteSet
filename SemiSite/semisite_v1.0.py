@@ -22,7 +22,7 @@ SRSF3		CHWCHMC
 SRSF10		TVAAGAHY
 
 v1.1.0.1 - added loging
-v1.1.0.2 - intron seq extraction (modified BSite function)
+v1.1.2.0 - intron seq extraction (modified BSite function)
 
 """
 
@@ -174,15 +174,14 @@ def algn_fuck(gene_n=None,
 	"""
 
 
-	if type(seq_mode) != int:
+	if seq_mode:
+		logging.debug(seq_mode)
+		gene_seq = int_seq
+		logging.info('intron alignment mode '+str(len(int_seq)))
+	else:
 		seq_record = SeqIO.read(ref_seq, 'genbank')
 		gene_seq = str(seq_record.seq)
-		logging.debug(len(gene_seq))
-	else:
-		gene_seq = int_seq
-
-		
-
+		logging.info('full gene alignment mode '+str(len(gene_seq)))
 
 	scores = []
 	starts = []
@@ -191,7 +190,6 @@ def algn_fuck(gene_n=None,
 	algn_it = 0
 	start_num = 0
 
-	
 	aligner = Align.PairwiseAligner()
 	aligner.mode = 'local'
 	aligner.target_internal_open_gap_score = -1000
@@ -281,9 +279,11 @@ with open('factors.config', 'r', newline='') as factors_list:  # cinfig file rea
 
 			print('===', gene_name, 'in progress')
 
-			get_intron(gb_file, int_int)
+			target_int = get_intron(gb_file, int_int)
 			score_list, start_list, algn_num, aligner_scores = algn_fuck(gene_n = gene_name,
 				                                                         factor = factor_name,
+				                                                         seq_mode = 'int',
+				                                                         int_seq = target_int,
 				                                                         ref_seq = gb_file,
 				                                                         bss_list = ever_seq,
 				                                                         table_name = df_name
