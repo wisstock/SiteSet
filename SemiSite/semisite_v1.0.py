@@ -21,7 +21,7 @@ YTHDC1		GGACH
 SRSF3		CHWCHMC
 SRSF10		TVAAGAHY
 
-v1.1.0.1 - added loging +
+v1.1.0.1 - added loging
 v1.1.0.2 - intron seq extraction (modified BSite function)
 
 """
@@ -124,25 +124,23 @@ def get_intron(gene=None, option='count'):
 	# Loop over the gen file, get the mRNA starts and ends position
 	# for '+' strand, detecting first mRNA-type feature
 	# and extract 5'-ends (f_loc) and 3'-ends locations of annotated exon
+	for feature in seq_record.features:
+		if feature.type == 'mRNA':
+			logging.debug('feature select '+str(feature.type))
+			logging.debug('feature select '+str(feature.qualifiers.get("transcript_id")))
+			for exon_location in feature.location.parts:
+				if i <= option + 1:
+					in_t_loc.append(int(exon_location.start))
+					in_f_loc.append(int(exon_location.end))
+					i += 1
+					logging.debug('feature in work '+str(feature.type)+' '+str(feature.qualifiers.get("transcript_id")))
+				else:
+					break
 
-	if option == 'count':
-		print('|GenIntron|', gene, 'counts of ', str(len(in_f_loc)),'introns\n')
-
-	elif type(option) == int:
-		for feature in seq_record.features:
-			if feature.type == 'mRNA':
-				for exon_location in feature.location.parts:
-					if i <= option + 1:
-						in_t_loc.append(int(exon_location.start))
-						in_f_loc.append(int(exon_location.end))
-						i += 1
-					else:
-						break
-
-	target_int_seq = seq_record.seq[in_f_loc[option - 2] : in_t_loc[option - 1]]
+	target_int_seq = seq_record.seq[in_f_loc[option-1] : in_t_loc[option]]
 
 	logging.info('intron '+str(i-2)+' seq extracted succesfull')
-	logging.info('selected feature ID:'+str(feature.qualifiers.get("db_xref")))
+	logging.info('selected feature ID:'+str(feature.qualifiers.get("transcript_id")))
 	logging.info('intron lenght: '+str(len(target_int_seq)))
 
 	return target_int_seq
@@ -236,7 +234,7 @@ def algn_fuck(gene_n=None,
 
 
 
-logging.basicConfig(level=logging.INFO, filename = 'semisite.log', filemode = 'w')
+logging.basicConfig(level=logging.DEBUG, filename = 'semisite.log', filemode = 'w')
 	# format = '%(levelname)-8s [%(asctime)s] %(message)s', level = logging.DEBUG, filename = 'semisite_%(asctime)s.log', filemode= 'w'
 	# debug
 	# info
