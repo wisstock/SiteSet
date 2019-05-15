@@ -37,6 +37,9 @@ from Bio import SeqIO, SeqFeature
 from Bio.SeqRecord import SeqRecord
 from Bio import Align
 
+from pyfiglet import Figlet  # programm title
+f = Figlet(font='big')       #
+
 
 
 def amb_nuc(seq):
@@ -133,6 +136,8 @@ def get_intron(gene=None, option='count'):
 					in_t_loc.append(int(exon_location.start))
 					in_f_loc.append(int(exon_location.end))
 					i += 1
+
+					f_id = str(feature.qualifiers.get("transcript_id"))
 					logging.debug('feature in work '+str(feature.type)+' '+str(feature.qualifiers.get("transcript_id")))
 				else:
 					break
@@ -140,7 +145,7 @@ def get_intron(gene=None, option='count'):
 	target_int_seq = seq_record.seq[in_f_loc[option-1] : in_t_loc[option]]
 
 	logging.info('intron '+str(i-2)+' seq extracted succesfull')
-	logging.info('selected feature ID:'+str(feature.qualifiers.get("transcript_id")))
+	logging.info('selected feature ID:'+f_id)
 	logging.info('intron lenght: '+str(len(target_int_seq)))
 
 	return target_int_seq
@@ -234,7 +239,7 @@ def algn_fuck(gene_n=None,
 
 
 
-logging.basicConfig(level=logging.DEBUG, filename = 'semisite.log', filemode = 'w')
+logging.basicConfig(level=logging.INFO, format = '%(levelname)-8s [%(asctime)s] %(message)s', filename = 'semisite.log', filemode = 'w')
 	# format = '%(levelname)-8s [%(asctime)s] %(message)s', level = logging.DEBUG, filename = 'semisite_%(asctime)s.log', filemode= 'w'
 	# debug
 	# info
@@ -253,8 +258,7 @@ with open(df_name, 'w', newline='') as res_file:  # initializing
 	writer.writerow(['gene', 'factor', 'site', 'score', 'location'])
 
 
-print('\n\n========== SemiSite v1.0 progress ==========')
-print('============================================\n\n')
+print(f.renderText('SemiSite v1.0.2'))
 
 with open('factors.config', 'r', newline='') as factors_list:  # cinfig file reading
 	reader = csv.reader(factors_list)
@@ -263,10 +267,10 @@ with open('factors.config', 'r', newline='') as factors_list:  # cinfig file rea
 		ever_seq = amb_nuc(row[1])
 		factor_name = row[0]
 
-		print('\n\n=========', factor_name, 'BS searching\n')
+		print('=========', factor_name, 'BS searching')
 
 		logging.info(factor_name + ' BS searching')                   # factor in progress
-		logging.info('binding site variants: '+str(ever_seq)+'\n\n')           # print all site variants
+		logging.info('binding site variants: '+str(ever_seq)+'\n')           # print all site variants
 
 
 		for gb_file in glob.glob('*.gb'):
@@ -285,11 +289,10 @@ with open('factors.config', 'r', newline='') as factors_list:  # cinfig file rea
 				                                                         table_name = df_name
 				                                                         )
 
-
-			print('===', gb_file.split('.')[0], 'done\n')
+			print('===', gb_file.split('.')[0], 'done')
 
 			logging.info('alignment count: '+str(algn_num)+'\n')             # alignment count
 			logging.info(gene_name + ' done\n')                         # gene done
-		logging.info('aligner settings:\n'+str(aligner_scores))     # alignment settings
+		logging.info('aligner settings:\n'+str(aligner_scores)+'\n')     # alignment settings
 
 # That's all!
