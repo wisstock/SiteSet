@@ -22,7 +22,7 @@ SRSF3		CHWCHMC
 SRSF10		TVAAGAHY
 
 v1.1.0.1 - added loging
-v1.1.2.0 - intron seq extraction (modified BSite function)
+v1.2.0 - intron seq extraction (modified BSite function)
 
 """
 
