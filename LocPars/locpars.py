@@ -16,10 +16,12 @@ import csv
 import numpy as nm
 import pandas as pd
 import glob
+
 import Bio
 from Bio import SeqIO, SeqFeature
 from Bio.SeqRecord import SeqRecord
 from Bio import Align
+
 
 
 class SiteSet(): 

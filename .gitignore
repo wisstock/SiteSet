@@ -1,9 +1,12 @@
-# aaa
+# extensions
 *.csv
 *.log
 *.config
 *.gb
 
+# files
+.Rhistory
+
+# directories
 Data/
 EnvUp/
-.Rhistory

@@ -1,14 +1,5 @@
 #!/usr/bin/env python3
 
-import sys
-import csv
-import glob
-import Bio
-from Bio import SeqIO, SeqFeature
-from Bio.SeqRecord import SeqRecord
-from Bio import Align
-
-
 """
 Localizing of semi-specific binding sites (bs) of RNA-binding proteins (RBP)
 using local alignment algorithm
@@ -27,7 +18,19 @@ The script require Python 3.5 or higer and Biopyton 1.68 or higer
 v0.1 - search semi-seq specific binding sites and generating data frame
 v0.2 - recognize target intron and localize alignment only in their seq
 v0.2.1 - add int_start and int_end columns to output data frame
+
 """
+
+
+import sys
+import csv
+import glob
+
+import Bio
+from Bio import SeqIO, SeqFeature
+from Bio.SeqRecord import SeqRecord
+from Bio import Align
+
 
 
 def amb_nuc(seq):
