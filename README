@@ -15,7 +15,7 @@
 === SiteSet toolkit v0.1 =========
 ==================================
 
-Toolkit for rapid analysis functional sites in nucleotide sequences.
+  Toolkit for rapid analysis functional sites in nucleotide sequences.
 
 
 
@@ -60,20 +60,20 @@ Toolkit for rapid analysis functional sites in nucleotide sequences.
 
 === Config file structure ========
 ==================================
-File with extension ".config" are require for setting up list of RBP
-and them bindings sites in extension nucleotide notation. 
-Default config file name for SemiSite (BSite)
-and LocPars tools are "factors.config".
+  File with extension ".config" are require for setting up list of RBP
+  and them bindings sites in extension nucleotide notation. 
+  Default config file name for SemiSite (BSite)
+  and LocPars tools are "factors.config".
 
-Data presentation format:
-YTHDC1,GGACH
-SRSF3,CHWCHMC
-SRSF10,TVAAGAHY
+  Data presentation format:
+  YTHDC1,GGACH
+  SRSF3,CHWCHMC
+  SRSF10,TVAAGAHY
 
-"factor_dep.config":
-YTHDC1,False
-SRSF3,True
-SRSF10,True
+  "factor_dep.config":
+  YTHDC1,False
+  SRSF3,True
+  SRSF10,True
 
 
 === Log file structure ==========

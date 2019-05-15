@@ -22,7 +22,8 @@ YTHDC1		GGACH
 SRSF3		CHWCHMC
 SRSF10		TVAAGAHY
 
-v1.1 - added loging + intron seq extraction (modified BSite function)
+v1.1.1 - added loging +
+v1.1.2 - intron seq extraction (modified BSite function)
 
 """
 
@@ -106,7 +107,12 @@ def get_intron(gene=None, option = 'count'):
 	try:
 		seq_record = SeqIO.read(gene, 'genbank')
 	except:
-		logging.warning('Gene not define!')
+		logging.error('gene not define!')
+
+	try:
+		type(option) == int
+	except:
+		logging.error('intron number not define!')
 
 	in_f_loc = []
 	in_t_loc = []
@@ -127,7 +133,9 @@ def get_intron(gene=None, option = 'count'):
 					in_t_loc.append(int(exon_location.start))
 					in_f_loc.append(int(exon_location.end))
 					i += 1
-					logging.debug('introne cycle')
+
+					logging.debug('introne cycle '+i)
+
 				else:
 					break
 
