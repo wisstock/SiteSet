@@ -22,12 +22,12 @@ position.stat <- data.frame(gene = character(),
 apa.pos <- data.frame(gene = c('GART', 'NAP1L', 'ZMYM3', 'CSTF3', 'PCIF1'),
                       position = c(744, 384, 65, 2304, 279))
 
-
+test <- c()
 # loop over all genes in input data frame
 for (current.gene in gene.list) {
   inner.df <- subset(position.df, gene == current.gene)
   inner.apa <- apa.pos$position[apa.pos$gene == current.gene]
-  
+  test <- append(test, current.gene)
   
   # subsetting by factors
   inner.srsf3 <- inner.df$location[inner.df$factor == 'SRSF3']
@@ -76,22 +76,6 @@ for (current.gene in gene.list) {
   df.all <- rbind(df.srsf3, get_df.ecdf(inner.srsf10, 'SRSF10'))
   df.all <- rbind(df.all, get_df.ecdf(inner.ythdc1, 'YTHDC1'))
   
-  # ECDF plot
-  ecdf.nam <- paste(current.gene, 'ecdf', sep = '.')  # generating plot name in air
-  
-  ecdf <- ggplot(df.all, aes(x=x, y=y, colour=group)) +
-    geom_line(size=1) +
-    geom_ribbon(aes(ymin = L, ymax = U, fill = group), alpha = .3) +
-    theme_minimal(base_size = 12,
-                  base_family = 'ubuntu mono') +
-    labs(title = current.gene) +
-    xlab('Позиція у інтроні (bp)') + 
-    ylab('Накопичена імовірність') +
-    guides(fill = guide_legend(title='Фактор'),
-           colour = guide_legend(title='Фактор'))
-  
-  assign(ecdf.nam, ecdf)
-  
   
   # calculate higest density interval for a 0.25 prob
   h <- hdi(density(inner.df$location[inner.df$factor == 'YTHDC1']),
@@ -99,30 +83,55 @@ for (current.gene in gene.list) {
            allowSplit = TRUE)
   
   
+  # ECDF plot
+  ecdf.nam <- paste(current.gene, 'ecdf', sep = '.')  # generating plot name in air
+  
+  ecdf <- ggplot(df.all, aes(x=x, y=y, colour=group)) +
+    geom_line(size=1) +
+    geom_ribbon(aes(ymin = L, ymax = U, fill = group), alpha = .2) +
+    theme_minimal(base_size = 12,
+                  base_family = 'ubuntu mono') +
+    labs(title = current.gene) +
+    xlab('Позиція у інтроні (bp)') + 
+    ylab('Кумулятивна імовірність') +
+    guides(fill = guide_legend(title='Фактор'),
+           colour = guide_legend(title='Фактор'))
+  
+  assign(ecdf.nam, ecdf)
+  
+
   # density bar plot
   dens.nam <- paste(current.gene, 'dens', sep = '.')  # generating plot name in air
-  
+
   dens <- ggplot(inner.df,
          aes(x = location,
              y = factor(factor))) +
     stat_density(aes(fill = stat(density)), geom = "raster", position = "identity") +
     scale_fill_gradient(low='blue', high='red') +  # low='blue', high='red'
+    geom_segment(aes(x = 744,     # PAS location
+                     xend = 744,
+                     y = .5,
+                     yend = 3.5),
+                 size = .5,
+                 colour = 'grey') +
+    geom_text(aes(label = 'XYI',
+                  x = 744,
+                  y = 3.4),
+              family = 'ubuntu mono')
+    annotate('rect', xmin = h[[1]],              # interval bar
+             xmax = h[[2]],
+             ymin = .5, ymax = 3.5, alpha = .3,
+             fill = 'white') +
     theme_minimal(base_size = 12,
                   base_family = 'ubuntu mono') +
     labs(title = current.gene) +
     xlab('Позиція у інтроні (bp)') + 
     ylab('Фактор') +
-    guides(fill = guide_legend(title='Щільність імовірності \n розподілу сайтів')) +
-    geom_segment(aes(x = inner.apa , y = .5,
-                     xend = inner.apa, yend = 3.5),
-                 size = .5,
-                 colour = 'grey') +
-    annotate('rect', xmin = h[[1]],
-             xmax = h[[2]],
-             ymin = .5, ymax = 3.5, alpha = .3,
-             fill = 'white')
+    guides(fill = guide_legend(title='Щільність імовірності \n розподілу сайтів'))
+      
   
   assign(dens.nam, dens)
   
   
 }
+
