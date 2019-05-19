@@ -6,6 +6,7 @@
 
 # files
 .Rhistory
+.RData
 
 # directories
 Data/
