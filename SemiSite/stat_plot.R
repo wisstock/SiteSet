@@ -8,8 +8,9 @@ require(HDInterval)
 
 
 setwd("/home/astria/Bio/Ctools/SiteSet/SemiSite")
-position.df <- read.csv('semisite_df.csv')
 
+
+position.df <- read.csv('semisite_df.csv')
 
 gene.list <- levels(position.df$gene)
 factor.list <- levels(position.df$factor)
@@ -26,55 +27,97 @@ apa.pos <- data.frame(gene = c('GART', 'NAP1L', 'ZMYM3', 'CSTF3', 'PCIF1'),
                       position = c(744, 384, 65, 2304, 279))
 
 
-# loop over all genes in input data frame
-for (current.gene in gene.list) {
-  inner.df <- subset(position.df, gene == current.gene)
-  inner.apa <- apa.pos$position[apa.pos$gene == current.gene]
-  test <- append(test, current.gene)
+ks_stat <- function(current.gene, input.factor, input.data) {
+  # KS stat calculation
   
-  # subsetting by factors
-  inner.srsf3 <- inner.df$location[inner.df$factor == 'SRSF3']
-  inner.srsf10 <- inner.df$location[inner.df$factor == 'SRSF10']
-  inner.ythdc1 <- inner.df$location[inner.df$factor == 'YTHDC1']
-  inner.uni <- unique(sort(inner.df$location))
-  
-  
-  # KS stat test
   alt.hyp <- c('two.sided', 'less', 'greater')
-  ks.nam <- paste('ks',
-                  factor.comb[1, i],
-                  factor.comb[2, i],
-                  sep = '.')
-  i <- 1
-  inner.p <- 0
+  inner.df <- subset(input.data, gene == current.gene)
   
-  for (i in ncol(factor.comb)) {  # loop over all combination of factors
-    for (current.hyp in alt.hyp) {  # loop over the alt hyp variance
-      current.ks <- ks.test(inner.df$location[inner.df$factor == factor.comb[1, i]],
-                          inner.df$location[inner.df$factor == factor.comb[2, i]],
-                          alternative = current.hyp)
+  ks_loop <- function(two.factors, input.df, hyp.list) {
+    target.p <- 0
+    for (current.hyp in hyp.list) {  # loop over the alt hyp variance
+      
+      current.ks <-  ks.test(input.df$location[input.df$factor == two.factors[1]],
+                             input.df$location[input.df$factor == two.factors[2]],
+                             alternative = current.hyp)
+      
       if(target.p < current.ks$p.value) {
         target.p <- current.ks$p.value
         target.hyp <- current.hyp
-      } else {
         next
       }
+      return(c(paste(two.factors, collapse='_'), target.hyp, target.p))
     }
-    current.df <- data.frame(current.gene,
-                             as.character(factor.comb[, i]),
-                             target.hyp,
-                             target.p)
-    colnames(current.df) <- c('gene', 'comb', 'ks.hyp', 'ks.p')
-    position.stat <- rbind(position.stat, current.df)
-    i <- i + 1
   }
-  
 
   
-  # inser plot section here!
+  ks.res <- apply(input.factor, MARGIN = 2,
+                  FUN = ks_loop,
+                  input.df = inner.df, hyp.list = alt.hyp)
   
+  current.df <- data.frame(current.gene, t(ks.res))
+  colnames(current.df) <- c('gene', 'comb', 'ks.hyp', 'ks.p')
   
+  return(current.df)
 }
+
+
+ecdf_plot <- function(input.data, input.gene, input.factor, input.factor) {
+  critical.p <- p.adjust(c(ks.3.10$p.value,
+                           ks.y.10$p.value,
+                           ks.y.3.l$p.value),
+                         "bonferroni")[1]
+  
+  
+  get_df.ecdf <- function(x, group, level = 0.05) { 
+    
+    n <- length(x)
+    x.sort <- sort(x)
+    y <- (1:n)/n 
+    
+    # confidence band calculated bu Central limit theorem
+    z <- qnorm(1-level/2)
+    U = pmin(y + z*sqrt(y*(1-y)/n ),1)
+    L = pmax(y - z*sqrt(y*(1-y)/n ),0)
+    data.frame(x=x.sort, y, group, z, U, L) 
+  }
+  
+  df.srsf3 <- get_df.ecdf(inner.srsf3,'SRSF3')
+  df.all <- rbind(df.srsf3, get_df.ecdf(inner.srsf10, 'SRSF10'))
+  df.all <- rbind(df.all, get_df.ecdf(inner.ythdc1, 'YTHDC1'))
+  
+  # ECDF plot
+  ecdf.nam <- paste(current.gene, 'ecdf', sep = '.')  # generating plot name in air
+  
+  ecdf <- ggplot(df.all, aes(x=x, y=y, colour=group)) +
+    geom_line(size=1) +
+    geom_ribbon(aes(ymin = L, ymax = U, fill = group), alpha = .2) +
+    theme_minimal(base_size = 12,
+                  base_family = 'ubuntu mono') +
+    labs(title = current.gene) +
+    xlab('Позиція у інтроні (bp)') + 
+    ylab('Кумулятивна імовірність') +
+    guides(fill = guide_legend(title='Фактор'),
+           colour = guide_legend(title='Фактор'))
+  
+  assign(ecdf.nam, ecdf)
+}
+
+
+stat.res <- lapply(gene.list, ks_stat,
+                   input.factor = factor.comb,
+                   input.data = position.df)
+position.stat <- as.data.frame(do.call(rbind, stat.res))
+
+rm(factor.comb)
+rm(stat.res)
+
+
+# subsetting by factors
+# inner.srsf3 <- inner.df$location[inner.df$factor == 'SRSF3']
+# inner.srsf10 <- inner.df$location[inner.df$factor == 'SRSF10']
+# inner.ythdc1 <- inner.df$location[inner.df$factor == 'YTHDC1']
+# inner.uni <- unique(sort(inner.df$location))
 
 # plot section ####
 critical.p <- p.adjust(c(ks.3.10$p.value,
@@ -100,13 +143,6 @@ df.srsf3 <- get_df.ecdf(inner.srsf3,'SRSF3')
 df.all <- rbind(df.srsf3, get_df.ecdf(inner.srsf10, 'SRSF10'))
 df.all <- rbind(df.all, get_df.ecdf(inner.ythdc1, 'YTHDC1'))
 
-
-# calculate higest density interval for a 0.25 prob
-h <- hdi(density(inner.df$location[inner.df$factor == 'YTHDC1']),
-         credMass = .25,
-         allowSplit = TRUE)
-
-
 # ECDF plot
 ecdf.nam <- paste(current.gene, 'ecdf', sep = '.')  # generating plot name in air
 
@@ -123,6 +159,11 @@ ecdf <- ggplot(df.all, aes(x=x, y=y, colour=group)) +
 
 assign(ecdf.nam, ecdf)
 
+
+# calculate higest density interval for a 0.25 prob
+h <- hdi(density(inner.df$location[inner.df$factor == 'YTHDC1']),
+         credMass = .25,
+         allowSplit = TRUE)
 
 # density bar plot
 dens.nam <- paste(current.gene, 'dens', sep = '.')  # generating plot name in air
