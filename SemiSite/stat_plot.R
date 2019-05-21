@@ -61,11 +61,21 @@ ks_stat <- function(current.gene, input.factor, input.data) {
   return(current.df)
 }
 
-
-ecdf_plot <- function(input.data, input.gene, input.factor, input.factor) {
-  critical.p <- p.adjust(c(ks.3.10$p.value,
-                           ks.y.10$p.value,
-                           ks.y.3.l$p.value),
+ecdf_plot <- function(input.gene, input.data, input.stat) {
+  
+  inner.df <- subset(input.data, gene == input.gene)
+  inner.stat <- subset(input.stat, gene == input.gene)
+  
+  # subsetting by factors
+  inner.srsf3 <- inner.df$location[inner.df$factor == 'SRSF3']
+  inner.srsf10 <- inner.df$location[inner.df$factor == 'SRSF10']
+  inner.ythdc1 <- inner.df$location[inner.df$factor == 'YTHDC1']
+  inner.uni <- unique(sort(inner.df$location))
+  
+  
+  critical.p <- p.adjust(c(inner.stat$ks.p[inner.stat$comb == 'SRSF10_SRSF3'],
+                           inner.stat$ks.p[inner.stat$comb == 'SRSF10_YTHDC1'],
+                           inner.stat$ks.p[inner.stat$comb == 'SRSF3_YTHDC1']),
                          "bonferroni")[1]
   
   
@@ -85,22 +95,62 @@ ecdf_plot <- function(input.data, input.gene, input.factor, input.factor) {
   df.srsf3 <- get_df.ecdf(inner.srsf3,'SRSF3')
   df.all <- rbind(df.srsf3, get_df.ecdf(inner.srsf10, 'SRSF10'))
   df.all <- rbind(df.all, get_df.ecdf(inner.ythdc1, 'YTHDC1'))
+  rm(df.srsf3)
   
   # ECDF plot
-  ecdf.nam <- paste(current.gene, 'ecdf', sep = '.')  # generating plot name in air
+  ecdf.nam <- paste(input.gene, 'ecdf', sep = '.')  # generating plot name in air
   
   ecdf <- ggplot(df.all, aes(x=x, y=y, colour=group)) +
     geom_line(size=1) +
     geom_ribbon(aes(ymin = L, ymax = U, fill = group), alpha = .2) +
     theme_minimal(base_size = 12,
                   base_family = 'ubuntu mono') +
-    labs(title = current.gene) +
+    labs(title = input.gene) +
     xlab('Позиція у інтроні (bp)') + 
     ylab('Кумулятивна імовірність') +
     guides(fill = guide_legend(title='Фактор'),
            colour = guide_legend(title='Фактор'))
   
-  assign(ecdf.nam, ecdf)
+  return(assign(ecdf.nam, ecdf))
+}
+
+# dens_plot <- function() {
+  # calculate higest density interval for a 0.25 prob
+  h <- hdi(density(inner.df$location[inner.df$factor == 'YTHDC1']),
+           credMass = .25,
+           allowSplit = TRUE)
+  
+  # density bar plot
+  dens.nam <- paste(current.gene, 'dens', sep = '.')  # generating plot name in air
+  
+  dens <- ggplot(inner.df,
+                 aes(x = location,
+                     y = factor(factor))) +
+    stat_density(aes(fill = stat(density)), geom = "raster", position = "identity") +
+    scale_fill_gradient(low='blue', high='red') +  # low='blue', high='red'
+    geom_segment(aes(x = 744,     # PAS location
+                     xend = 744,
+                     y = .5,
+                     yend = 3.5),
+                 size = .5,
+                 colour = 'grey') +
+    geom_text(aes(label = 'XYI',
+                  x = 744,
+                  y = 3.4),
+              family = 'ubuntu mono')
+  annotate('rect', xmin = h[[1]],              # interval bar
+           xmax = h[[2]],
+           ymin = .5, ymax = 3.5, alpha = .3,
+           fill = 'white') +
+    theme_minimal(base_size = 12,
+                  base_family = 'ubuntu mono') +
+    labs(title = current.gene) +
+    xlab('Позиція у інтроні (bp)') + 
+    ylab('Фактор') +
+    guides(fill = guide_legend(title='Щільність імовірності \n розподілу сайтів'))
+  
+  
+  assign(dens.nam, dens)
 }
 
 
@@ -112,88 +162,6 @@ position.stat <- as.data.frame(do.call(rbind, stat.res))
 rm(factor.comb)
 rm(stat.res)
 
-
-# subsetting by factors
-# inner.srsf3 <- inner.df$location[inner.df$factor == 'SRSF3']
-# inner.srsf10 <- inner.df$location[inner.df$factor == 'SRSF10']
-# inner.ythdc1 <- inner.df$location[inner.df$factor == 'YTHDC1']
-# inner.uni <- unique(sort(inner.df$location))
-
-# plot section ####
-critical.p <- p.adjust(c(ks.3.10$p.value,
-                         ks.y.10$p.value,
-                         ks.y.3.l$p.value),
-                       "bonferroni")[1]
-
-
-get_df.ecdf <- function(x, group, level = 0.05) { 
-  
-  n <- length(x)
-  x.sort <- sort(x)
-  y <- (1:n)/n 
-  
-  # confidence band calculated bu Central limit theorem
-  z <- qnorm(1-level/2)
-  U = pmin(y + z*sqrt(y*(1-y)/n ),1)
-  L = pmax(y - z*sqrt(y*(1-y)/n ),0)
-  data.frame(x=x.sort, y, group, z, U, L) 
-}
-
-df.srsf3 <- get_df.ecdf(inner.srsf3,'SRSF3')
-df.all <- rbind(df.srsf3, get_df.ecdf(inner.srsf10, 'SRSF10'))
-df.all <- rbind(df.all, get_df.ecdf(inner.ythdc1, 'YTHDC1'))
-
-# ECDF plot
-ecdf.nam <- paste(current.gene, 'ecdf', sep = '.')  # generating plot name in air
-
-ecdf <- ggplot(df.all, aes(x=x, y=y, colour=group)) +
-  geom_line(size=1) +
-  geom_ribbon(aes(ymin = L, ymax = U, fill = group), alpha = .2) +
-  theme_minimal(base_size = 12,
-                base_family = 'ubuntu mono') +
-  labs(title = current.gene) +
-  xlab('Позиція у інтроні (bp)') + 
-  ylab('Кумулятивна імовірність') +
-  guides(fill = guide_legend(title='Фактор'),
-         colour = guide_legend(title='Фактор'))
-
-assign(ecdf.nam, ecdf)
-
-
-# calculate higest density interval for a 0.25 prob
-h <- hdi(density(inner.df$location[inner.df$factor == 'YTHDC1']),
-         credMass = .25,
-         allowSplit = TRUE)
-
-# density bar plot
-dens.nam <- paste(current.gene, 'dens', sep = '.')  # generating plot name in air
-
-dens <- ggplot(inner.df,
-               aes(x = location,
-                   y = factor(factor))) +
-  stat_density(aes(fill = stat(density)), geom = "raster", position = "identity") +
-  scale_fill_gradient(low='blue', high='red') +  # low='blue', high='red'
-  geom_segment(aes(x = 744,     # PAS location
-                   xend = 744,
-                   y = .5,
-                   yend = 3.5),
-               size = .5,
-               colour = 'grey') +
-  geom_text(aes(label = 'XYI',
-                x = 744,
-                y = 3.4),
-            family = 'ubuntu mono')
-annotate('rect', xmin = h[[1]],              # interval bar
-         xmax = h[[2]],
-         ymin = .5, ymax = 3.5, alpha = .3,
-         fill = 'white') +
-  theme_minimal(base_size = 12,
-                base_family = 'ubuntu mono') +
-  labs(title = current.gene) +
-  xlab('Позиція у інтроні (bp)') + 
-  ylab('Фактор') +
-  guides(fill = guide_legend(title='Щільність імовірності \n розподілу сайтів'))
-
-
-assign(dens.nam, dens)
-
+lapply(gene.list, ecdf_plot,
+       input.data = position.df,
+       input.stat = position.stat)
