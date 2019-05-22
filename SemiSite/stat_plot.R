@@ -114,41 +114,46 @@ ecdf_plot <- function(input.gene, input.data, input.stat) {
   return(assign(ecdf.nam, ecdf))
 }
 
-# dens_plot <- function() {
+dens_plot <- function(input.gene, input.data, input.apa, input.hdi) {
+  
+  inner.data <- subset(input.data, gene == input.gene)
+  inner.apa <- input.apa$position[input.apa$gene == input.gene]
+  
   # calculate higest density interval for a 0.25 prob
-  h <- hdi(density(inner.df$location[inner.df$factor == 'YTHDC1']),
-           credMass = .25,
+  h <- hdi(density(inner.data$location[inner.data$factor == 'YTHDC1']),
+           credMass = input.hdi,
            allowSplit = TRUE)
-  
+
   # density bar plot
-  dens.nam <- paste(current.gene, 'dens', sep = '.')  # generating plot name in air
+  dens.nam <- paste(input.gene, 'dens', sep = '.')  # generating plot name in air
   
-  dens <- ggplot(inner.df,
+  dens <- ggplot(inner.data,
                  aes(x = location,
                      y = factor(factor))) +
     stat_density(aes(fill = stat(density)), geom = "raster", position = "identity") +
     scale_fill_gradient(low='blue', high='red') +  # low='blue', high='red'
-    geom_segment(aes(x = 744,     # PAS location
-                     xend = 744,
-                     y = .5,
-                     yend = 3.5),
-                 size = .5,
-                 colour = 'grey') +
-    geom_text(aes(label = 'XYI',
-                  x = 744,
-                  y = 3.4),
-              family = 'ubuntu mono')
-  annotate('rect', xmin = h[[1]],              # interval bar
-           xmax = h[[2]],
-           ymin = .5, ymax = 3.5, alpha = .3,
-           fill = 'white') +
     theme_minimal(base_size = 12,
                   base_family = 'ubuntu mono') +
-    labs(title = current.gene) +
+    labs(title = input.gene) +
     xlab('Позиція у інтроні (bp)') + 
     ylab('Фактор') +
-    guides(fill = guide_legend(title='Щільність імовірності \n розподілу сайтів'))
-  
+    guides(fill = guide_legend(title='Щільність імовірності \n розподілу сайтів')) +
+  geom_segment(aes(x = h[[1]],     # HDI start
+                  xend = h[[1]],
+                  y = .5,
+                  yend = 3.5),
+              size = .3,
+              colour = 'grey') +
+  geom_segment(aes(x = h[[2]],     # HDI end
+                   xend = h[[2]],
+                   y = .5,
+                   yend = 3.5),
+               size = .3,
+               colour = 'grey') +
+  annotate('rect', xmin = h[[1]],              # interval bar
+           xmax = h[[2]],
+           ymin = .5, ymax = 3.5, alpha = .1,
+           fill = 'white')
   
   assign(dens.nam, dens)
 }
@@ -165,3 +170,9 @@ rm(stat.res)
 lapply(gene.list, ecdf_plot,
        input.data = position.df,
        input.stat = position.stat)
+
+lapply(gene.list, dens_plot,
+       input.data = position.df,
+       input.apa = apa.pos,
+
+       input.hdi = .2)
