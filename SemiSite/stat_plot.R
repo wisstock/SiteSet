@@ -3,7 +3,7 @@
 # Copyright © 2019 Borys Olifirov
 
 require(ggplot2)
-require(RColorBrewer)
+require(plyr)
 require(HDInterval)
 
 
@@ -39,7 +39,8 @@ ks_stat <- function(current.gene, input.factor, input.data) {
       
       current.ks <-  ks.test(input.df$location[input.df$factor == two.factors[1]],
                              input.df$location[input.df$factor == two.factors[2]],
-                             alternative = current.hyp)
+                             alternative = current.hyp,
+                             exact = FALSE)
       
       if(target.p < current.ks$p.value) {
         target.p <- current.ks$p.value
@@ -131,7 +132,7 @@ dens_plot <- function(input.gene, input.data, input.apa, input.hdi) {
                  aes(x = location,
                      y = factor(factor))) +
     stat_density(aes(fill = stat(density)), geom = "raster", position = "identity") +
-    scale_fill_gradient(low='blue', high='red') +  # low='blue', high='red'
+    scale_fill_gradient() +  # low='blue', high='red'
     theme_minimal(base_size = 12,
                   base_family = 'ubuntu mono') +
     labs(title = input.gene) +
@@ -164,8 +165,12 @@ stat.res <- lapply(gene.list, ks_stat,
                    input.data = position.df)
 position.stat <- as.data.frame(do.call(rbind, stat.res))
 
+num.p <- as.numeric(levels(position.stat$ks.p)[position.stat$ks.p])
+position.stat$rev.p <- sapply(num.p, FUN = function(x) {1 - x})
+
 rm(factor.comb)
 rm(stat.res)
+rm(num.p)
 
 lapply(gene.list, ecdf_plot,
        input.data = position.df,
@@ -174,5 +179,9 @@ lapply(gene.list, ecdf_plot,
 lapply(gene.list, dens_plot,
        input.data = position.df,
        input.apa = apa.pos,
-
        input.hdi = .2)
+
+count.df <- as.data.frame(count(position.df, c('gene', 'factor')))
+
+write.csv(position.stat, file = 'KS_test.csv')
+write.csv(count.df, file = 'sites_count.csv')
