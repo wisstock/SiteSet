@@ -3,9 +3,10 @@
 require(ggplot2)
 require(gridExtra)
 
-setwd('/home/astria/Bio/Computation/SiteSet/SSite')
+setwd('/home/astria/Bio/Ctools/SiteSet/SSite')
 
 in_df <- read.csv('ss_df.csv', header = T)
+res_df <- read.csv('ss_df.csv', header = T)
 
 
 ##### SUBSETTING ######
@@ -88,7 +89,7 @@ ggplot(f_ss, aes( x = as.factor(pas_loc),
   labs(y = 'Score',
        x = 'Intron type') +
   guides(fill = F, color = F) +
-  theme_minimal(base_size = 20,
+  theme_minimal(base_size = 12,
                 base_family = 'ubuntu mono')
 
 ggplot(f_ss, aes(x = gene, 
@@ -98,7 +99,7 @@ ggplot(f_ss, aes(x = gene,
   labs(y = 'Score',
        x = 'Gene') +
   guides(fill = F, color = F) +
-  theme_minimal(base_size = 20,
+  theme_minimal(base_size = 12,
                 base_family = 'ubuntu mono')+
   scale_fill_brewer(palette="Dark2") +
   scale_color_brewer(palette="Dark2")

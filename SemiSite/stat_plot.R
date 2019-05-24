@@ -115,16 +115,36 @@ ecdf_plot <- function(input.gene, input.data, input.stat) {
   return(assign(ecdf.nam, ecdf))
 }
 
-dens_plot <- function(input.gene, input.data, input.apa, input.hdi) {
+dens_plot <- function(input.gene, input.data, input.apa, input.factor, input.hdi) {
   
+  ## test
+  #input.gene <- "GART"
+  #input.data <- position.df
+  #input.apa <- apa.pos
+  #input.factor <- factor.list
+  #input.hdi <- .2
+  ##
+
   inner.data <- subset(input.data, gene == input.gene)
   inner.apa <- input.apa$position[input.apa$gene == input.gene]
   
   # calculate higest density interval for a 0.25 prob
-  h <- hdi(density(inner.data$location[inner.data$factor == 'YTHDC1']),
-           credMass = input.hdi,
-           allowSplit = TRUE)
-
+  # h.y <- hdi(density(inner.data$location[inner.data$factor == 'YTHDC1']),
+  #          credMass = input.hdi,
+  #          allowSplit = TRUE)
+  
+  h <-lapply(input.factor, function(x, data, mass){
+             hdi(density(data$location[data$factor == x]),
+                                             credMass = mass,
+                                             allowSplit = FALSE)
+                                            },
+             mass = input.hdi,
+             data = inner.data)
+  
+  h.df <- as.data.frame(do.call(rbind, h))
+  h.df$factor <- as.vector(input.factor)
+  
+  
   # density bar plot
   dens.nam <- paste(input.gene, 'dens', sep = '.')  # generating plot name in air
   
@@ -139,23 +159,56 @@ dens_plot <- function(input.gene, input.data, input.apa, input.hdi) {
     xlab('Позиція у інтроні (bp)') + 
     ylab('Фактор') +
     guides(fill = guide_legend(title='Щільність імовірності \n розподілу сайтів')) +
-  geom_segment(aes(x = h[[1]],     # HDI start
-                  xend = h[[1]],
-                  y = .5,
+  geom_segment(aes(x = h.df$upper[h.df$factor == 'YTHDC1'],     # YTHDC1 HDI start
+                  xend = h.df$upper[h.df$factor == 'YTHDC1'],
+                  y = 2.5,
                   yend = 3.5),
               size = .3,
               colour = 'grey') +
-  geom_segment(aes(x = h[[2]],     # HDI end
-                   xend = h[[2]],
-                   y = .5,
+  geom_segment(aes(x = h.df$lower[h.df$factor == 'YTHDC1'],     # YTHDC1 HDI end
+                   xend = h.df$lower[h.df$factor == 'YTHDC1'],
+                   y = 2.5,
                    yend = 3.5),
                size = .3,
                colour = 'grey') +
-  annotate('rect', xmin = h[[1]],              # interval bar
-           xmax = h[[2]],
-           ymin = .5, ymax = 3.5, alpha = .1,
+  annotate('rect', xmin = h.df$lower[h.df$factor == 'YTHDC1'],  # YTHDC1 interval bar
+           xmax = h.df$upper[h.df$factor == 'YTHDC1'],
+           ymin = 2.5, ymax = 3.5, alpha = .1,
+           fill = 'white') +
+  geom_segment(aes(x = h.df$upper[h.df$factor == 'SRSF3'],     # SRSF3 HDI start
+                   xend = h.df$upper[h.df$factor == 'SRSF3'],
+                   y = 1.5,
+                   yend = 2.5),
+               size = .3,
+               colour = 'grey') +
+  geom_segment(aes(x = h.df$lower[h.df$factor == 'SRSF3'],     # SRSF3 HDI end
+                   xend = h.df$lower[h.df$factor == 'SRSF3'],
+                   y = 1.5,
+                     yend = 2.5),
+                 size = .3,
+                 colour = 'grey') +
+  annotate('rect', xmin = h.df$lower[h.df$factor == 'SRSF3'],  # SRSF3 interval bar
+           xmax = h.df$upper[h.df$factor == 'SRSF3'],
+           ymin = 1.5, ymax = 2.5, alpha = .1,
+           fill = 'white') +
+  geom_segment(aes(x = h.df$upper[h.df$factor == 'SRSF10'],     # SRSF10 HDI start
+                   xend = h.df$upper[h.df$factor == 'SRSF10'],
+                   y = .5,
+                   yend = 1.5),
+                size = .3,
+                colour = 'grey') +
+  geom_segment(aes(x = h.df$lower[h.df$factor == 'SRSF10'],     # SRSF10 HDI end
+                   xend = h.df$lower[h.df$factor == 'SRSF10'],
+                   y = .5,
+                   yend = 1.5),
+               size = .3,
+               colour = 'grey') +
+  annotate('rect', xmin = h.df$lower[h.df$factor == 'SRSF10'],  # SRSF10 interval bar
+           xmax = h.df$upper[h.df$factor == 'SRSF10'],
+           ymin = .5, ymax = 1.5, alpha = .1,
            fill = 'white')
   
+  print(dens)
   assign(dens.nam, dens)
 }
 
@@ -179,7 +232,8 @@ lapply(gene.list, ecdf_plot,
 lapply(gene.list, dens_plot,
        input.data = position.df,
        input.apa = apa.pos,
-       input.hdi = .2)
+       input.factor = factor.list,
+       input.hdi = .5)
 
 count.df <- as.data.frame(count(position.df, c('gene', 'factor')))
 
