@@ -144,6 +144,8 @@ dens_plot <- function(input.gene, input.data, input.apa, input.factor, input.hdi
   h.df <- as.data.frame(do.call(rbind, h))
   h.df$factor <- as.vector(input.factor)
   
+  write.csv(h.df, file = 'hdi.csv')
+  
   
   # density bar plot
   dens.nam <- paste(input.gene, 'dens', sep = '.')  # generating plot name in air
@@ -233,7 +235,7 @@ lapply(gene.list, dens_plot,
        input.data = position.df,
        input.apa = apa.pos,
        input.factor = factor.list,
-       input.hdi = .5)
+       input.hdi = .2)
 
 count.df <- as.data.frame(count(position.df, c('gene', 'factor')))
 
