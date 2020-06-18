@@ -7,7 +7,7 @@ mkl-fft==1.0.6
 mkl-random==1.0.1
 numpy==1.15.2
 pandas==0.24.2
-psutil==5.6.1
+psutil==5.6.6
 pyfiglet==0.8.post1
 pyte==0.8.0
 python-dateutil==2.8.0
